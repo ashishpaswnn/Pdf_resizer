@@ -1,118 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ferrari 3D Viewer</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #111;
-      touch-action: none;
-      user-select: none;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
-
-  <!-- Import Maps -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-      "three/examples/jsm/loaders/GLTFLoader.js": "https://unpkg.com/three@0.164.1/examples/jsm/loaders/GLTFLoader.js",
-      "three/examples/jsm/loaders/DRACOLoader.js": "https://unpkg.com/three@0.164.1/examples/jsm/loaders/DRACOLoader.js",
-      "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.164.1/examples/jsm/controls/OrbitControls.js"
-    }
-  }
-  </script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ferrari 3D Viewer</title>
+<style>
+  html, body { margin:0; padding:0; overflow:hidden; background:#111; touch-action:none; user-select:none; }
+  canvas { display:block; }
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://unpkg.com/three@0.164.1/build/three.module.js",
+  "three/examples/jsm/loaders/GLTFLoader.js":"https://unpkg.com/three@0.164.1/examples/jsm/loaders/GLTFLoader.js",
+  "three/examples/jsm/loaders/DRACOLoader.js":"https://unpkg.com/three@0.164.1/examples/jsm/loaders/DRACOLoader.js",
+  "three/examples/jsm/controls/OrbitControls.js":"https://unpkg.com/three@0.164.1/examples/jsm/controls/OrbitControls.js"
+}}
+</script>
 </head>
 <body>
-  <script type="module">
-    import * as THREE from 'three';
-    import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-    import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-    import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+  import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-    // Setup scene
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x111111, 10, 60);
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x111111, 10, 60);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(5,2,8);
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  document.body.appendChild(renderer.domElement);
 
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(5, 2, 8);
+  scene.add(new THREE.AmbientLight(0xffffff,0.4));
+  const dirLight = new THREE.DirectionalLight(0xffffff,0.8);
+  dirLight.position.set(5,10,7);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(1024, 1024);
+  scene.add(dirLight);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    document.body.appendChild(renderer.domElement);
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(200,200),
+    new THREE.ShadowMaterial({opacity:0.3})
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
 
-    // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(5, 10, 7);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.set(1024, 1024);
-    scene.add(dirLight);
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
 
-    // Ground
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(200, 200),
-      new THREE.ShadowMaterial({ opacity: 0.3 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // DRACO loader from CDN
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/'); // Google-hosted DRACO decoder
-
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader);
-
-    // Load Ferrari model from Three.js CDN (already Draco compressed)
-    loader.load('https://threejs.org/examples/models/gltf/ferrari.glb', (gltf) => {
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(dracoLoader);
+  loader.load('https://threejs.org/examples/models/gltf/ferrari.glb',
+    gltf => {
       const model = gltf.scene;
-      model.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
+      model.traverse(c => { if(c.isMesh){ c.castShadow=true; c.receiveShadow=true; }});
       scene.add(model);
-    }, undefined, (err) => {
-      console.error('Error loading model:', err);
-    });
+    },
+    undefined,
+    err => console.error('Error loading model', err)
+  );
 
-    // OrbitControls for camera
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.enablePan = false;
-    controls.maxPolarAngle = Math.PI / 2;
-    controls.target.set(0, 1, 0);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.enablePan = false;
+  controls.maxPolarAngle = Math.PI/2;
+  controls.target.set(0,1,0);
 
-    // Resize
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 
-    // Prevent pull-to-refresh
-    window.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-    }, { passive: false });
+  window.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
 
-    // Animate
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+  (function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  })();
+</script>
 </body>
 </html>
