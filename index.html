@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ferrari 3D Game</title>
+  <title>Ferrari 3D Viewer</title>
   <style>
     html, body {
       margin: 0;
@@ -17,6 +17,8 @@
       display: block;
     }
   </style>
+
+  <!-- Import Maps -->
   <script type="importmap">
   {
     "imports": {
@@ -35,6 +37,7 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
     import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+    // Setup scene
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x111111, 10, 60);
 
@@ -46,15 +49,15 @@
     renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-    scene.add(ambientLight);
-
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(5, 10, 7);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.set(1024, 1024);
     scene.add(dirLight);
 
+    // Ground
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(200, 200),
       new THREE.ShadowMaterial({ opacity: 0.3 })
@@ -63,13 +66,15 @@
     ground.receiveShadow = true;
     scene.add(ground);
 
+    // DRACO loader from CDN
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('./libs/draco/');
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/'); // Google-hosted DRACO decoder
 
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
 
-    loader.load('./models/ferrari.glb', (gltf) => {
+    // Load Ferrari model from Three.js CDN (already Draco compressed)
+    loader.load('https://threejs.org/examples/models/gltf/ferrari.glb', (gltf) => {
       const model = gltf.scene;
       model.traverse((child) => {
         if (child.isMesh) {
@@ -82,22 +87,26 @@
       console.error('Error loading model:', err);
     });
 
+    // OrbitControls for camera
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.enablePan = false;
     controls.maxPolarAngle = Math.PI / 2;
     controls.target.set(0, 1, 0);
 
+    // Resize
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
+    // Prevent pull-to-refresh
     window.addEventListener('touchmove', (e) => {
       e.preventDefault();
     }, { passive: false });
 
+    // Animate
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
