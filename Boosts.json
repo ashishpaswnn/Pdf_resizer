@@ -4,13 +4,13 @@
   "description": "Please login to continue using this app.",
   "button": "LOGIN",
   "toast": "✅ Successfully Logged In!",
-  "renewUrl": "https://t.me/dp_mods",
+  "renewUrl": "https://t.me/Devid_ASHU",
   "devices": [
     {
       "device_id": "0a08d8899bb47bbb",
       "username": "ASHU",
       "password": "121212",
-      "expire_date": "2025-10-24"
+      "expire_date": "2025-10-23"
     },
     {
       "device_id": "abcdef9876543210",
